@@ -1,0 +1,6 @@
+{
+  "name": "EUREKA COCHING CENTRE",
+  "description": "Eureka Coaching Centre - Comprehensive Coaching Centre Management & Learning App. Developed by Nipam Hazarika (nipamhazarika77@gmail.com).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
