@@ -35,9 +35,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Star
@@ -433,111 +431,49 @@ fun AdmissionContactScreen(
                                     color = MaterialTheme.colorScheme.surfaceVariant,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column(modifier = Modifier.padding(10.dp)) {
-                                        // Email Row
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
                                         Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Row(
-                                                modifier = Modifier.weight(1f),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Icon(Icons.Default.Email, contentDescription = "Email", tint = RoyalBlueLight, modifier = Modifier.size(16.dp))
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = "nipamhazarika77@gmail.com",
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = MaterialTheme.colorScheme.onSurface
-                                                )
-                                            }
-
-                                            Row {
-                                                IconButton(
-                                                    onClick = {
-                                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                        val clip = ClipData.newPlainText("Developer Email", "nipamhazarika77@gmail.com")
-                                                        clipboard.setPrimaryClip(clip)
-                                                        Toast.makeText(context, "Email copied: nipamhazarika77@gmail.com", Toast.LENGTH_SHORT).show()
-                                                    },
-                                                    modifier = Modifier.size(30.dp)
-                                                ) {
-                                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = RoyalBlueLight, modifier = Modifier.size(15.dp))
-                                                }
-
-                                                IconButton(
-                                                    onClick = {
-                                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                                            data = Uri.parse("mailto:nipamhazarika77@gmail.com")
-                                                            putExtra(Intent.EXTRA_SUBJECT, "Query regarding Eureka Coaching App")
-                                                        }
-                                                        context.startActivity(Intent.createChooser(intent, "Email Developer"))
-                                                    },
-                                                    modifier = Modifier.size(30.dp)
-                                                ) {
-                                                    Icon(Icons.Default.Email, contentDescription = "Send Email", tint = RoyalBlueLight, modifier = Modifier.size(15.dp))
-                                                }
-                                            }
+                                            Icon(Icons.Default.Email, contentDescription = "Email", tint = RoyalBlueLight, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = "nipamhazarika77@gmail.com",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
                                         }
 
-                                        Spacer(modifier = Modifier.height(8.dp))
-
-                                        // UPI ID Row
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.weight(1f),
-                                                verticalAlignment = Alignment.CenterVertically
+                                        Row {
+                                            IconButton(
+                                                onClick = {
+                                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                                    val clip = ClipData.newPlainText("Developer Email", "nipamhazarika77@gmail.com")
+                                                    clipboard.setPrimaryClip(clip)
+                                                    Toast.makeText(context, "Email copied: nipamhazarika77@gmail.com", Toast.LENGTH_SHORT).show()
+                                                },
+                                                modifier = Modifier.size(32.dp)
                                             ) {
-                                                Icon(Icons.Default.QrCode, contentDescription = "UPI", tint = EmeraldSuccess, modifier = Modifier.size(16.dp))
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Column {
-                                                    Text(
-                                                        text = "UPI: 8876057287@ptsbi",
-                                                        fontSize = 12.sp,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                    Text(
-                                                        text = "Paytm • PhonePe • GPay • BHIM",
-                                                        fontSize = 9.sp,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
+                                                Icon(Icons.Default.ContentCopy, contentDescription = "Copy", tint = RoyalBlueLight, modifier = Modifier.size(16.dp))
                                             }
 
-                                            Row {
-                                                IconButton(
-                                                    onClick = {
-                                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                        val clip = ClipData.newPlainText("UPI ID", "8876057287@ptsbi")
-                                                        clipboard.setPrimaryClip(clip)
-                                                        Toast.makeText(context, "UPI ID copied: 8876057287@ptsbi", Toast.LENGTH_SHORT).show()
-                                                    },
-                                                    modifier = Modifier.size(30.dp)
-                                                ) {
-                                                    Icon(Icons.Default.ContentCopy, contentDescription = "Copy UPI ID", tint = EmeraldSuccess, modifier = Modifier.size(15.dp))
-                                                }
-
-                                                IconButton(
-                                                    onClick = {
-                                                        val upiUri = Uri.parse("upi://pay?pa=8876057287@ptsbi&pn=Nipam%20Hazarika&cu=INR&tn=Eureka%20Payment")
-                                                        val intent = Intent(Intent.ACTION_VIEW, upiUri)
-                                                        try {
-                                                            context.startActivity(Intent.createChooser(intent, "Pay using UPI"))
-                                                        } catch (e: Exception) {
-                                                            Toast.makeText(context, "No UPI app found. Please copy UPI ID.", Toast.LENGTH_SHORT).show()
-                                                        }
-                                                    },
-                                                    modifier = Modifier.size(30.dp)
-                                                ) {
-                                                    Icon(Icons.Default.OpenInNew, contentDescription = "Open UPI", tint = EmeraldSuccess, modifier = Modifier.size(15.dp))
-                                                }
+                                            IconButton(
+                                                onClick = {
+                                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                                        data = Uri.parse("mailto:nipamhazarika77@gmail.com")
+                                                        putExtra(Intent.EXTRA_SUBJECT, "Query regarding Eureka Coaching App")
+                                                    }
+                                                    context.startActivity(Intent.createChooser(intent, "Email Developer"))
+                                                },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(Icons.Default.Email, contentDescription = "Send Email", tint = RoyalBlueLight, modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }

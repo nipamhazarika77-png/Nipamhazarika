@@ -22,7 +22,6 @@ import com.example.data.model.UserProfile
 import com.example.data.model.UserRole
 import com.example.data.repository.CoachingRepository
 import com.example.data.model.ChatMessage
-import com.example.data.quiz.QuizQuestionBank
 import com.example.data.remote.GeminiApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -177,16 +175,6 @@ class CoachingViewModel(application: Application) : AndroidViewModel(application
 
     private val _selectedAiSubject = MutableStateFlow("All")
     val selectedAiSubject: StateFlow<String> = _selectedAiSubject.asStateFlow()
-
-    // AI Quiz & ADRE 3.0 Generation State
-    private val _isGeneratingAiQuiz = MutableStateFlow(false)
-    val isGeneratingAiQuiz: StateFlow<Boolean> = _isGeneratingAiQuiz.asStateFlow()
-
-    private val _selectedQuizSubject = MutableStateFlow("GK")
-    val selectedQuizSubject: StateFlow<String> = _selectedQuizSubject.asStateFlow()
-
-    private val _selectedQuizStandard = MutableStateFlow("ADRE 3.0 & All Standards")
-    val selectedQuizStandard: StateFlow<String> = _selectedQuizStandard.asStateFlow()
 
     // Toast/Snackbar Message
     private val _snackbarMessage = MutableStateFlow<String?>(null)
@@ -361,123 +349,6 @@ class CoachingViewModel(application: Application) : AndroidViewModel(application
         _selectedAnswers.value = emptyMap()
         _lastExamResult.value = null
         _currentScreen.value = AppScreen.ONLINE_EXAMS
-    }
-
-    fun setQuizSubject(subject: String) {
-        _selectedQuizSubject.value = subject
-    }
-
-    fun setQuizStandard(standard: String) {
-        _selectedQuizStandard.value = standard
-    }
-
-    fun generateAndStartAiQuiz(
-        subject: String = _selectedQuizSubject.value,
-        standard: String = _selectedQuizStandard.value,
-        count: Int = 5,
-        isAdreSpecial: Boolean = false
-    ) {
-        viewModelScope.launch {
-            _isGeneratingAiQuiz.value = true
-            showSnackbar("Gemini AI is crafting your customized test questions...")
-
-            val effectiveSubject = if (isAdreSpecial) "ADRE 3.0 Special Syllabus" else subject
-            val result = GeminiApiClient.generateAiQuizWithGemini(
-                subject = effectiveSubject,
-                standard = standard,
-                language = _currentLanguage.value,
-                questionCount = count
-            )
-
-            _isGeneratingAiQuiz.value = false
-
-            val questions = result.getOrElse {
-                QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(count)
-            }.ifEmpty {
-                QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(count)
-            }
-
-            val title = if (isAdreSpecial) "ADRE 3.0 AI Practice Mock" else "AI Gemini Quiz: $subject"
-            val titleAs = if (isAdreSpecial) "ADRE ৩.০ এআই মক পৰীক্ষা" else "এআই কুইজ: $subject"
-            val durationMinutes = (questions.size * 1.5).toInt().coerceAtLeast(5)
-
-            startQuestionsExam(
-                title = title,
-                titleAs = titleAs,
-                subject = effectiveSubject,
-                classLevel = standard,
-                durationMinutes = durationMinutes,
-                questions = questions
-            )
-        }
-    }
-
-    fun startSubjectQuiz(subject: String) {
-        val questions = QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(5)
-        val title = "Rapid Quiz: $subject"
-        val titleAs = "দ্ৰুত কুইজ: $subject"
-        startQuestionsExam(
-            title = title,
-            titleAs = titleAs,
-            subject = subject,
-            classLevel = "All Standards",
-            durationMinutes = 6,
-            questions = questions
-        )
-    }
-
-    fun startAdre3MockExam() {
-        val questions = QuizQuestionBank.ADRE_3_PRACTICE_QUESTIONS.shuffled().take(8)
-        startQuestionsExam(
-            title = "ADRE 3.0 Full Mock Test (Grade III & IV)",
-            titleAs = "ADRE ৩.০ সম্পূৰ্ণ মক টেষ্ট (৩য় আৰু ৪ৰ্থ বৰ্গ)",
-            subject = "ADRE 3.0 Special",
-            classLevel = "Govt Recruitment",
-            durationMinutes = 10,
-            questions = questions
-        )
-    }
-
-    fun startQuestionsExam(
-        title: String,
-        titleAs: String,
-        subject: String,
-        classLevel: String,
-        durationMinutes: Int,
-        questions: List<Question>
-    ) {
-        val questionsJson = encodeQuestionsToJson(questions)
-        val totalMarks = questions.size * 5
-        val dynamicExam = OnlineExamEntity(
-            id = "quiz_${System.currentTimeMillis() % 100000}",
-            title = title,
-            titleAs = titleAs,
-            subject = subject,
-            classLevel = classLevel,
-            durationMinutes = durationMinutes,
-            totalMarks = totalMarks,
-            questionsJson = questionsJson,
-            createdDate = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date()),
-            batchId = "all"
-        )
-        startExam(dynamicExam)
-    }
-
-    private fun encodeQuestionsToJson(questions: List<Question>): String {
-        val jsonArray = JSONArray()
-        questions.forEach { q ->
-            val obj = JSONObject()
-            obj.put("id", q.id)
-            obj.put("questionText", q.questionText)
-            obj.put("questionTextAs", q.questionTextAs)
-            val optionsArr = JSONArray()
-            q.options.forEach { optionsArr.put(it) }
-            obj.put("options", optionsArr)
-            obj.put("correctIndex", q.correctIndex)
-            obj.put("explanation", q.explanation)
-            jsonArray.put(obj)
-        }
-        return jsonArray.toString()
     }
 
     private fun parseQuestionsJson(json: String): List<Question> {

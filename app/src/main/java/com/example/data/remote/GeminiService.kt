@@ -1,9 +1,6 @@
 package com.example.data.remote
 
 import com.example.BuildConfig
-import com.example.data.localization.Language
-import com.example.data.model.Question
-import com.example.data.quiz.QuizQuestionBank
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -12,8 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import org.json.JSONArray
-import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
@@ -358,133 +353,5 @@ x = (-b ± √(b² - 4ac)) / (2a)
 *Need a more specific formula derivation or bilingual Assamese translation? Ask me with the subject filter!*
 """.trimIndent()
         }
-    }
-
-    /**
-     * AI-Powered Dynamic Quiz Generator for GK, EVS, History, Polity, Assam Affairs & ADRE 3.0
-     */
-    suspend fun generateAiQuizWithGemini(
-        subject: String,
-        standard: String,
-        language: Language,
-        questionCount: Int = 5
-    ): Result<List<Question>> = withContext(Dispatchers.IO) {
-        val apiKey = try {
-            BuildConfig.GEMINI_API_KEY
-        } catch (e: Throwable) {
-            ""
-        }
-
-        val prompt = """
-You are "Eureka AI Guru", premier exam question setter for Assam SEBA/CBSE/AHSEC syllabus and Assam Direct Recruitment Examination (ADRE 3.0 / APSC).
-Generate an array of exactly $questionCount high-yield multiple-choice questions for:
-- Subject: $subject (e.g. General Knowledge, Environmental Studies EVS, Assam & Indian History, Political Science & Constitution, Assam Current Affairs 2025-2026, ADRE 3.0 Grade III & IV Practice Series).
-- Target Student Level: $standard.
-- Language Preference: ${if (language == Language.ASSAMESE) "Provide question and options in Assamese with English transliteration" else "Bilingual English with Assamese translation"}.
-
-CRITICAL: Return ONLY a raw JSON array without markdown backticks or any conversational text.
-Each question object MUST strictly match:
-[
-  {
-    "id": 1,
-    "questionText": "Question string in English",
-    "questionTextAs": "Question string in Assamese (অসমীয়া)",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctIndex": 0,
-    "explanation": "Detailed explanation mentioning historical/scientific facts, articles, and exam tips."
-  }
-]
-""".trimIndent()
-
-        if (apiKey.isBlank() || apiKey == "MY_GEMINI_API_KEY") {
-            // Instant curated dynamic fallback
-            val fallbackQuestions = QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(questionCount)
-            return@withContext Result.success(fallbackQuestions)
-        }
-
-        try {
-            val request = GeminiGenerateRequest(
-                contents = listOf(
-                    GeminiContent(
-                        role = "user",
-                        parts = listOf(GeminiPart(text = prompt))
-                    )
-                ),
-                generationConfig = GeminiGenerationConfig(
-                    temperature = 0.4f,
-                    maxOutputTokens = 2048
-                )
-            )
-
-            val response = apiService.generateContent(apiKey = apiKey, request = request)
-            val responseText = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
-
-            if (!responseText.isNullOrBlank()) {
-                val questions = parseQuestionsFromJson(responseText)
-                if (questions.isNotEmpty()) {
-                    return@withContext Result.success(questions)
-                }
-            }
-
-            // Fallback if empty or parse issue
-            val fallbackQuestions = QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(questionCount)
-            Result.success(fallbackQuestions)
-        } catch (e: Exception) {
-            val fallbackQuestions = QuizQuestionBank.getQuestionsBySubject(subject).shuffled().take(questionCount)
-            Result.success(fallbackQuestions)
-        }
-    }
-
-    private fun parseQuestionsFromJson(rawJson: String): List<Question> {
-        val result = mutableListOf<Question>()
-        try {
-            val cleaned = rawJson
-                .replace("```json", "")
-                .replace("```", "")
-                .trim()
-
-            val startIndex = cleaned.indexOf('[')
-            val endIndex = cleaned.lastIndexOf(']')
-
-            if (startIndex == -1 || endIndex == -1 || startIndex >= endIndex) {
-                return emptyList()
-            }
-
-            val jsonArrayString = cleaned.substring(startIndex, endIndex + 1)
-            val jsonArray = JSONArray(jsonArrayString)
-
-            for (i in 0 until jsonArray.length()) {
-                val obj = jsonArray.getJSONObject(i)
-                val id = obj.optInt("id", i + 1)
-                val questionText = obj.optString("questionText", "Question $id")
-                val questionTextAs = obj.optString("questionTextAs", "")
-                val optionsArray = obj.optJSONArray("options")
-                val optionsList = mutableListOf<String>()
-                if (optionsArray != null) {
-                    for (j in 0 until optionsArray.length()) {
-                        optionsList.add(optionsArray.getString(j))
-                    }
-                }
-                while (optionsList.size < 4) {
-                    optionsList.add("Option ${optionsList.size + 1}")
-                }
-                val correctIndex = obj.optInt("correctIndex", 0).coerceIn(0, optionsList.size - 1)
-                val explanation = obj.optString("explanation", "")
-
-                result.add(
-                    Question(
-                        id = id,
-                        questionText = questionText,
-                        questionTextAs = questionTextAs,
-                        options = optionsList,
-                        correctIndex = correctIndex,
-                        explanation = explanation
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            // Ignore parse errors, return parsed so far
-        }
-        return result
     }
 }
